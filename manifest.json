@@ -1,0 +1,18 @@
+{
+    "manifest_version": 3,
+    "name": "Narratives",
+    "description": "Narratives",
+    "version": "0.1",
+    "content_scripts": [
+      {
+          "js": [
+            "scripts/sortable.js",
+            "scripts/narratives.js"
+          ],
+          "matches": [
+            "https://github.com/*/pull/*/files",
+            "https://github.com/*/pull/*/files*"
+          ]
+        }
+      ]
+  }
