@@ -17,8 +17,34 @@ function makeInputElement() {
     return input
 }
 
+const MAX_ITERS = 100
+
+function combineContainers() {
+    const containers = document.querySelectorAll(".js-diff-progressive-container")
+    if (containers.length <= 1) {
+        return;
+    }
+
+    const newContainer = containers[0];
+    containers.forEach((container, index) => {
+        if (index > 0) {
+            for (let counter = 0; counter < MAX_ITERS & container.children.length > 0; counter++) {
+                // [0] is intentional as appendChild moves the first child
+                newContainer.appendChild(container.children[0])
+            }
+        }
+    })
+}
+
 function setupNarratives() {
     let inputParent = document.querySelector(".pr-review-tools")
+
+    if (inputParent.getAttribute("narratives-setup") !== null) {
+        return
+    }
+
+    inputParent.setAttribute("narratives-setup", true)
+    combineContainers()
 
     let input = makeInputElement()
     let button = makeButtonElement()
@@ -56,6 +82,31 @@ function setupNarratives() {
     })
 }
 
-window.addEventListener("load", function() {
-    setupNarratives()
+const CHECK_TIME_MS = 50
+const MAX_WAIT_TIME = 5000
+
+function waitForProgressiveContainerThenSetupNarratives() {
+    const numFiles = parseInt(document.querySelector("#files_tab_counter").innerText)
+    let counter = 0
+
+    function check() {
+        if (counter * CHECK_TIME_MS > MAX_WAIT_TIME) {
+            return
+        }
+
+        if (document.querySelectorAll("copilot-diff-entry").length == numFiles) {
+            setupNarratives()
+        }  else {
+            counter += 1
+            setTimeout(check, CHECK_TIME_MS)
+        }
+    }
+
+    check()
+}
+
+window.navigation.addEventListener("navigate", function() {
+    if (document.location.pathname.match(/^\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/pull\/\d+\/files$/)) {
+        waitForProgressiveContainerThenSetupNarratives()
+    }
 })

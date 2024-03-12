@@ -10,8 +10,7 @@
             "scripts/narratives.js"
           ],
           "matches": [
-            "https://github.com/*/pull/*/files",
-            "https://github.com/*/pull/*/files*"
+            "https://github.com/*"
           ]
         }
       ]
