@@ -1,20 +1,18 @@
 function makeButtonElement() {
-    var button = document.createElement('button');
-    button.style = "float: left; width: 16px; background: white; border: none; margin-top: 7.5px; padding: 0px; color: rgb(101, 109, 118)";
-    button.title = "Copy diff ordering"
-    button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>`;
-
-    return button
+    let buttonDiv = document.createElement('div');
+    buttonDiv.className = "diffbar-item dropdown js-reviews-container";
+    buttonDiv.innerHTML = `<button id="narratives-button" style="border-top-right-radius: 0; border-bottom-right-radius: 0" target="_blank" aria-label="Copy Narratives Order" data-view-component="true" class="Button--secondary Button--small Button"><span class="Button-content"><span class="Button-label"><svg aria-hidden="true" focusable="false" role="img" class="octicon octicon-copy" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:inline-block;user-select:none;vertical-align:text-bottom;overflow:visible"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg></span></span></button>`; 
+    let button = buttonDiv.querySelector('button');
+    return { buttonDiv, button };
 }
 
 function makeInputElement() {
-    let input = document.createElement("input")
-    input.type = "text"
-    input.className = "css-class-name"
-    input.style = "float: left;width: 80px;font-size: 12px;margin-left: 10px;margin-right: 10px;margin-top: 5px; text-align: center"
-    input.placeholder = "Paste Order"
-
-    return input
+    let inputDiv = document.createElement("div")
+    inputDiv.className = "diffbar-item dropdown js-reviews-container";
+    inputDiv.style = "margin-right: 16px"; 
+    inputDiv.innerHTML = `<input type="text" id="narratives-input" style="line-height: 16px; padding: 5px 5px; border-top-left-radius: 0; border-bottom-left-radius: 0" class="form-control input-block pl-1" placeholder="Paste Narratives Order" aria-label="Paste Narratives Order">`;
+    let input = inputDiv.querySelector("input");
+    return { inputDiv, input };
 }
 
 const MAX_ITERS = 100
@@ -46,11 +44,11 @@ function setupNarratives() {
     inputParent.setAttribute("narratives-setup", true)
     combineContainers()
 
-    let input = makeInputElement()
-    let button = makeButtonElement()
+    let { inputDiv, input } = makeInputElement()
+    let { buttonDiv, button } = makeButtonElement()
 
-    inputParent.insertBefore(input, inputParent.children[1])
-    inputParent.insertBefore(button, inputParent.children[1])
+    inputParent.insertBefore(inputDiv, inputParent.children[1])
+    inputParent.insertBefore(buttonDiv, inputParent.children[1])
 
     let sortable = Sortable.create(
         document.getElementsByClassName("js-diff-progressive-container")[0],
