@@ -54,6 +54,7 @@ function setupNarratives() {
         document.getElementsByClassName("js-diff-progressive-container")[0],
         {
             dataIdAttr: 'data-file-path',
+            handle: ".file-header.file-header--expandable",
             onUpdate() {
                 input.value = JSON.stringify(sortable.toArray())
             }

@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
     "name": "Narratives",
-    "description": "Narratives",
-    "version": "0.1",
+    "description": "Narratives: Reorder Files in GitHub PRs",
+    "version": "0.0.1",
     "content_scripts": [
       {
           "js": [
