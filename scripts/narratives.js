@@ -56,6 +56,48 @@ function combineContainers() {
     })
 }
 
+/**
+ * When someone starts dragging, we do two things:
+ * - collapse all diffs, so just the header shows
+ * - remove the content of the files from the DOM to make the dragging faster
+ * 
+ * We then lazily add back the content when someone clicks the expand button
+ */
+function setupDiffContentRemover() {
+    const diffIdToElement = new Map()
+    const hiddenElements = new Set()
+
+    document.querySelectorAll("div.file.js-file").forEach(fileContainer => {
+        const fileContentElement = fileContainer.children[1]
+        diffIdToElement.set(fileContainer.id, fileContentElement)
+
+        fileContainer.querySelector(
+            ".file-header > .file-info > button"
+        ).addEventListener("click", () => {
+            if (hiddenElements.has(fileContainer.id)) {
+                fileContainer.appendChild(fileContentElement)
+
+                hiddenElements.delete(fileContainer.id)
+            }
+        })
+    })
+
+    const onDragStart = () => {
+        // Close all open diffs
+        document.querySelectorAll(
+            ".file.Details.Details--on > .file-header > .file-info > button"
+        ).forEach(elem => elem.click())
+
+        diffIdToElement.forEach((element, id) => {
+            element.remove()
+            hiddenElements.add(id)
+        })
+    }
+
+    return { onDragStart }
+}
+
+
 function setupNarratives() {
     let inputParent = document.querySelector(".pr-review-tools")
 
@@ -73,6 +115,8 @@ function setupNarratives() {
     inputParent.insertBefore(inputDiv, inputParent.children[1])
     inputParent.insertBefore(buttonDiv, inputParent.children[1])
 
+    const { onDragStart } = setupDiffContentRemover()
+
     let sortable = Sortable.create(
         document.getElementsByClassName("js-diff-progressive-container")[0],
         {
@@ -80,7 +124,10 @@ function setupNarratives() {
             handle: ".file-header.file-header--expandable",
             onUpdate() {
                 input.value = JSON.stringify(sortable.toArray())
-            }
+            },
+            onChoose: function() {
+                onDragStart()
+            },
         }
     )
 
@@ -134,6 +181,6 @@ function waitForProgressiveContainerThenSetupNarratives() {
 window.navigation.addEventListener("navigate", function() {
     // only run on pull request page
     if (document.location.pathname.match(/^\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/pull\/\d+\/files$/)) {
-        waitForProgressiveContainerThenSetupNarratives()
+        setTimeout(waitForProgressiveContainerThenSetupNarratives, 0)
     }
 })
