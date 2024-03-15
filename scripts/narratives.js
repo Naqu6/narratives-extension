@@ -1,8 +1,18 @@
 function makeButtonElement() {
     let buttonDiv = document.createElement('div');
     buttonDiv.className = "diffbar-item dropdown js-reviews-container";
-    buttonDiv.innerHTML = `<button id="narratives-button" style="border-top-right-radius: 0; border-bottom-right-radius: 0" target="_blank" aria-label="Copy Narratives Order" data-view-component="true" class="Button--secondary Button--small Button"><span class="Button-content"><span class="Button-label"><svg aria-hidden="true" focusable="false" role="img" class="octicon octicon-copy" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:inline-block;user-select:none;vertical-align:text-bottom;overflow:visible"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg></span></span></button>`; 
+    buttonDiv.innerHTML = `<button id="narratives-button" style="border-top-right-radius: 0; border-bottom-right-radius: 0" target="_blank" aria-label="Copy Narratives Order" data-view-component="true" class="Button--secondary Button--small Button">
+    <span class="Button-content">
+       <span class="Button-label">
+          <svg aria-hidden="true" focusable="false" role="img" class="octicon octicon-copy" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:inline-block;user-select:none;vertical-align:text-bottom;overflow:visible">
+             <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path>
+             <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+          </svg>
+       </span>
+    </span>
+ </button>`; 
     let button = buttonDiv.querySelector('button');
+    
     return { buttonDiv, button };
 }
 
@@ -10,13 +20,25 @@ function makeInputElement() {
     let inputDiv = document.createElement("div")
     inputDiv.className = "diffbar-item dropdown js-reviews-container";
     inputDiv.style = "margin-right: 16px"; 
-    inputDiv.innerHTML = `<input type="text" id="narratives-input" style="line-height: 16px; padding: 5px 5px; border-top-left-radius: 0; border-bottom-left-radius: 0" class="form-control input-block pl-1" placeholder="Paste Narratives Order" aria-label="Paste Narratives Order">`;
+    inputDiv.innerHTML = `
+        <input
+            type="text"
+            id="narratives-input"
+            style="line-height: 16px; padding: 5px 5px; border-top-left-radius: 0; border-bottom-left-radius: 0"
+            class="form-control input-block pl-1"
+            placeholder="Paste Narratives Order"
+            aria-label="Paste Narratives Order"
+        >`;
     let input = inputDiv.querySelector("input");
     return { inputDiv, input };
 }
 
-const MAX_ITERS = 100
+const MAX_ITERS = 100 // prevent infinite loops
 
+/**
+ * Github puts the diffs into several different containers, this function combines them to one
+ * so sortable works.
+ */
 function combineContainers() {
     const containers = document.querySelectorAll(".js-diff-progressive-container")
     if (containers.length <= 1) {
@@ -37,11 +59,12 @@ function combineContainers() {
 function setupNarratives() {
     let inputParent = document.querySelector(".pr-review-tools")
 
+    // Make sure we don't setup twice
     if (inputParent.getAttribute("narratives-setup") !== null) {
         return
     }
-
     inputParent.setAttribute("narratives-setup", true)
+
     combineContainers()
 
     let { inputDiv, input } = makeInputElement()
@@ -61,6 +84,7 @@ function setupNarratives() {
         }
     )
 
+    
     button.addEventListener("click", () => {
         input.select();
         input.setSelectionRange(0, 1000000); // per w3 school
@@ -84,6 +108,9 @@ function setupNarratives() {
 const CHECK_TIME_MS = 50
 const MAX_WAIT_TIME = 5000
 
+/**
+ * Wait for all files to load
+ */
 function waitForProgressiveContainerThenSetupNarratives() {
     const numFiles = parseInt(document.querySelector("#files_tab_counter").innerText)
     let counter = 0
@@ -105,6 +132,7 @@ function waitForProgressiveContainerThenSetupNarratives() {
 }
 
 window.navigation.addEventListener("navigate", function() {
+    // only run on pull request page
     if (document.location.pathname.match(/^\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/pull\/\d+\/files$/)) {
         waitForProgressiveContainerThenSetupNarratives()
     }

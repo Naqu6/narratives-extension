@@ -1,6 +1,7 @@
 /**
  * Hello! This code was taken directly from
  * https://github.com/SortableJS/Sortable/blob/07708fa1e7d9cf9d4563a7b1a09f7a47771522ed/Sortable.js
+ * It is a welll known and trusted library.
  */
 /**!
  * Sortable 1.15.2
