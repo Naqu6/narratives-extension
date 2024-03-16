@@ -10,14 +10,16 @@ function makeButtonElement() {
           </svg>
        </span>
     </span>
- </button>`;
-    let button = buttonDiv.querySelector('button');
+ </button>`; 
+    let button = buttonDiv.querySelector('button') as HTMLButtonElement;
+    
     return { buttonDiv, button };
 }
+
 function makeInputElement() {
-    let inputDiv = document.createElement("div");
+    let inputDiv = document.createElement("div")
     inputDiv.className = "diffbar-item dropdown js-reviews-container";
-    inputDiv.setAttribute("style", "margin-right: 16px");
+    inputDiv.setAttribute("style", "margin-right: 16px")
     inputDiv.innerHTML = `
         <input
             type="text"
@@ -27,142 +29,181 @@ function makeInputElement() {
             placeholder="Paste Narratives Order"
             aria-label="Paste Narratives Order"
         >`;
-    let input = inputDiv.querySelector("input");
+    let input = inputDiv.querySelector("input") as HTMLInputElement;
     return { inputDiv, input };
 }
-const MAX_ITERS = 100; // prevent infinite loops
+
+const MAX_ITERS = 100 // prevent infinite loops
+
 /**
  * Github puts the diffs into several different containers, this function combines them to one
  * so sortable works.
  */
 function combineContainers() {
-    const containers = document.querySelectorAll(".js-diff-progressive-container");
+    const containers = document.querySelectorAll(".js-diff-progressive-container")
     if (containers.length <= 1) {
         return;
     }
+
     const newContainer = containers[0];
     containers.forEach((container, index) => {
         if (index > 0) {
             for (let counter = 0; counter < MAX_ITERS && container.children.length > 0; counter++) {
                 // [0] is intentional as appendChild moves the first child
-                newContainer.appendChild(container.children[0]);
+                newContainer.appendChild(container.children[0])
             }
         }
-    });
+    })
 }
+
 /**
  * When someone starts dragging, we do two things:
  * - collapse all diffs, so just the header shows
  * - remove the content of the files from the DOM to make the dragging faster
- *
+ * 
  * We then lazily add back the content when someone clicks the expand button
  */
 function setupDiffContentRemover() {
-    const diffIdToElement = new Map();
-    const hiddenElements = new Set();
+    const diffIdToElement = new Map()
+    const hiddenElements = new Set()
+
     document.querySelectorAll("div.file.js-file").forEach(fileContainer => {
-        const fileContentElement = fileContainer.children[1];
-        diffIdToElement.set(fileContainer.id, fileContentElement);
-        const button = fileContainer.querySelector(".file-header > .file-info > button");
+        const fileContentElement = fileContainer.children[1]
+        diffIdToElement.set(fileContainer.id, fileContentElement)
+
+        const button = fileContainer.querySelector(
+            ".file-header > .file-info > button"
+        )
         if (button === null) {
-            return;
+            return
         }
-        const events = ["drag", "dragstart", "mousedown", "touchstart", "pointerdown"];
-        events.forEach(eventType => button.addEventListener(eventType, (event) => event.stopPropagation()));
+
+        const events = ["drag", "dragstart", "mousedown", "touchstart", "pointerdown"]
+        events.forEach(eventType => button.addEventListener(eventType, (event) => event.stopPropagation()))
+        
         button.addEventListener("click", () => {
             if (hiddenElements.has(fileContainer.id)) {
-                fileContainer.appendChild(fileContentElement);
-                hiddenElements.delete(fileContainer.id);
+                fileContainer.appendChild(fileContentElement)
+
+                hiddenElements.delete(fileContainer.id)
             }
-        });
-    });
+        })
+    })
+
     const onDragStart = () => {
         // Close all open diffs
-        const collapseButtons = document.querySelectorAll(".file.Details.Details--on > .file-header > .file-info > button");
-        collapseButtons.forEach((elem) => elem.click());
+        const collapseButtons = document.querySelectorAll(
+            ".file.Details.Details--on > .file-header > .file-info > button"
+        ) as NodeListOf<HTMLButtonElement> 
+        collapseButtons.forEach((elem: HTMLButtonElement) => elem.click())
+
         diffIdToElement.forEach((element, id) => {
-            element.remove();
-            hiddenElements.add(id);
-        });
-    };
-    return { onDragStart };
-}
-function setupNarratives() {
-    let inputParent = document.querySelector(".pr-review-tools");
-    if (inputParent === null) {
-        return;
+            element.remove()
+            hiddenElements.add(id)
+        })
     }
+
+    return { onDragStart }
+}
+
+
+function setupNarratives() {
+    let inputParent = document.querySelector(".pr-review-tools")
+
+    if (inputParent === null) {
+        return
+    }
+
     // Make sure we don't setup twice
     if (inputParent.getAttribute("narratives-setup") !== null) {
-        return;
+        return
     }
-    inputParent.setAttribute("narratives-setup", "true");
-    combineContainers();
-    let { inputDiv, input } = makeInputElement();
-    let { buttonDiv, button } = makeButtonElement();
-    inputParent.insertBefore(inputDiv, inputParent.children[1]);
-    inputParent.insertBefore(buttonDiv, inputParent.children[1]);
-    const { onDragStart } = setupDiffContentRemover();
+    inputParent.setAttribute("narratives-setup", "true")
+
+    combineContainers()
+
+    let { inputDiv, input } = makeInputElement()
+    let { buttonDiv, button } = makeButtonElement()
+
+    inputParent.insertBefore(inputDiv, inputParent.children[1])
+    inputParent.insertBefore(buttonDiv, inputParent.children[1])
+
+    const { onDragStart } = setupDiffContentRemover()
+
     // @ts-ignore: sortable is imported by chrome
-    let sortable = Sortable.create(document.getElementsByClassName("js-diff-progressive-container")[0], {
-        dataIdAttr: 'data-file-path',
-        handle: ".file-header.file-header--expandable",
-        onUpdate() {
-            input.value = JSON.stringify(sortable.toArray());
-        },
-        onChoose: function () {
-            console.log("Hi ryan");
-            onDragStart();
-        },
-    });
+    let sortable = Sortable.create(
+        document.getElementsByClassName("js-diff-progressive-container")[0],
+        {
+            dataIdAttr: 'data-file-path',
+            handle: ".file-header.file-header--expandable",
+            onUpdate() {
+                input.value = JSON.stringify(sortable.toArray())
+            },
+            onChoose: function() {
+                console.log("Hi ryan")
+                onDragStart()
+            },
+        }
+    )
+
+    
     button.addEventListener("click", () => {
         input.select();
         input.setSelectionRange(0, 1000000); // per w3 school
         navigator.clipboard.writeText(input.value);
-    });
+    })
+
     function setOrder(orderAsString) {
-        let result = JSON.parse(orderAsString);
-        sortable.sort(result);
+        let result = JSON.parse(orderAsString)
+        sortable.sort(result)
+        
     }
+
     input.addEventListener("paste", (event) => {
         if (event.clipboardData !== null) {
-            setOrder(event.clipboardData.getData("text"));
+            setOrder(event.clipboardData.getData("text"))
         }
-    });
+    })
     input.addEventListener("change", () => {
-        setOrder(input.value);
-    });
+        setOrder(input.value)
+    })
 }
-const CHECK_TIME_MS = 50;
-const MAX_WAIT_TIME = 5000;
+
+const CHECK_TIME_MS = 50
+const MAX_WAIT_TIME = 5000
+
 /**
  * Wait for all files to load
  */
 function waitForProgressiveContainerThenSetupNarratives() {
-    const filesCounter = document.querySelector("#files_tab_counter");
+    const filesCounter = document.querySelector("#files_tab_counter")
     if (filesCounter === null) {
-        return;
+        return
     }
-    const numFiles = parseInt(filesCounter.innerHTML);
-    let counter = 0;
+
+    const numFiles = parseInt(filesCounter.innerHTML)
+    let counter = 0
+
     function check() {
         if (counter * CHECK_TIME_MS > MAX_WAIT_TIME) {
-            return;
+            return
         }
+
         if (document.querySelectorAll("copilot-diff-entry").length == numFiles) {
-            setupNarratives();
-        }
-        else {
-            counter += 1;
-            setTimeout(check, CHECK_TIME_MS);
+            setupNarratives()
+        }  else {
+            counter += 1
+            setTimeout(check, CHECK_TIME_MS)
         }
     }
-    check();
+
+    check()
 }
+
 // @ts-ignore: window.navigation exists on up to date versions of chrome
-window.navigation.addEventListener("navigate", function () {
+window.navigation.addEventListener("navigate", function() {
     // only run on pull request page
     if (document.location.pathname.match(/^\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/pull\/\d+\/files$/)) {
-        setTimeout(waitForProgressiveContainerThenSetupNarratives, 0);
+        setTimeout(waitForProgressiveContainerThenSetupNarratives, 0)
     }
-});
+})

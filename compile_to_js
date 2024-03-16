@@ -1,0 +1,1 @@
+tsc -t esnext scripts/narratives.ts
