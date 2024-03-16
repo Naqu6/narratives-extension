@@ -1,3 +1,4 @@
+const SEARCH_PARAMS_KEY = "diff-order";
 function makeButtonHTML(content) {
     return `<button target="_blank" aria-label="Copy Narratives Order" data-view-component="true" class="Button--secondary Button--small Button">
     <span class="Button-content">
@@ -35,9 +36,11 @@ function makeCopyButton() {
              <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path>
              <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
           </svg>
+          Copy Order
        `);
     let copyButton = copyButtonDiv.querySelector('button');
-    copyButton.setAttribute("style", "border-top-right-radius: 0; border-bottom-right-radius: 0");
+    copyButton.setAttribute("disabled", "true");
+    copyButtonDiv.style.marginRight = "8px";
     return { copyButtonDiv, copyButton };
 }
 function makeInputElement() {
@@ -46,9 +49,10 @@ function makeInputElement() {
     inputDiv.setAttribute("style", "margin-right: 16px");
     inputDiv.innerHTML = `
         <input
+            disabled
             type="text"
             id="narratives-input"
-            style="line-height: 16px; padding: 5px 5px; border-top-left-radius: 0; border-bottom-left-radius: 0"
+            style="display: none"
             class="form-control input-block pl-1"
             placeholder="Paste Narratives Order"
             aria-label="Paste Narratives Order"
@@ -138,12 +142,18 @@ function setupNarratives() {
     inputParent.insertBefore(copyButtonDiv, inputParent.children[1]);
     inputParent.insertBefore(handleControlDiv, inputParent.children[1]);
     const { onDragStart, onDragEnd } = setupDiffContentRemover();
+    function setInputValue(order) {
+        const searchParams = new URLSearchParams(window.location.search);
+        searchParams.append(SEARCH_PARAMS_KEY, encodeURIComponent(JSON.stringify(order)));
+        input.value = `${window.location.href.split('?')[0]}?${searchParams.toString()}`;
+    }
     // @ts-ignore: sortable is imported by chrome
     let sortable = Sortable.create(document.getElementsByClassName("js-diff-progressive-container")[0], {
         dataIdAttr: 'data-file-path',
         handle: ".narratives-dnd-handle",
         onUpdate() {
-            input.value = encodeURIComponent(JSON.stringify(sortable.toArray()));
+            setInputValue(sortable.toArray());
+            copyButton.removeAttribute("disabled");
         },
         onChoose: function () {
             onDragStart();
@@ -160,19 +170,12 @@ function setupNarratives() {
     function setOrder(orderAsString) {
         let result = JSON.parse(decodeURIComponent(orderAsString));
         sortable.sort(result);
+        setInputValue(result);
     }
     if (narrativeFromQueryString !== null) {
         setOrder(narrativeFromQueryString);
         input.value = narrativeFromQueryString;
     }
-    input.addEventListener("paste", (event) => {
-        if (event.clipboardData !== null) {
-            setOrder(event.clipboardData.getData("text"));
-        }
-    });
-    input.addEventListener("change", () => {
-        setOrder(input.value);
-    });
 }
 const CHECK_TIME_MS = 50;
 const MAX_WAIT_TIME = 5000;
@@ -202,7 +205,7 @@ function waitForProgressiveContainerThenSetupNarratives() {
 }
 function extractNarrativeFromQueryString() {
     const searchParams = new URLSearchParams(document.location.search);
-    const diffOrder = searchParams.get("diff-order");
+    const diffOrder = searchParams.get(SEARCH_PARAMS_KEY);
     if (diffOrder !== null) {
         narrativeFromQueryString = diffOrder;
     }
