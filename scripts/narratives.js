@@ -50,6 +50,7 @@ function combineContainers() {
         }
     });
 }
+const events_to_stop_propagation_in_header = ["drag", "dragstart", "mousedown", "touchstart", "pointerdown", "click"];
 /**
  * When someone starts dragging, we do two things:
  * - collapse all diffs, so just the header shows
@@ -58,34 +59,31 @@ function combineContainers() {
  * We then lazily add back the content when someone clicks the expand button
  */
 function setupDiffContentRemover() {
-    const diffIdToElement = new Map();
-    const hiddenElements = new Set();
-    document.querySelectorAll("div.file.js-file").forEach(fileContainer => {
-        const fileContentElement = fileContainer.children[1];
-        diffIdToElement.set(fileContainer.id, fileContentElement);
-        const button = fileContainer.querySelector(".file-header > .file-info > button");
-        if (button === null) {
-            return;
-        }
-        const events = ["drag", "dragstart", "mousedown", "touchstart", "pointerdown"];
-        events.forEach(eventType => button.addEventListener(eventType, (event) => event.stopPropagation()));
-        button.addEventListener("click", () => {
-            if (hiddenElements.has(fileContainer.id)) {
-                fileContainer.appendChild(fileContentElement);
-                hiddenElements.delete(fileContainer.id);
-            }
+    const containersAndElements = [];
+    document.querySelectorAll("div.file.js-file").forEach(container => {
+        // children: [header, content]
+        const header = container.children[0];
+        // Don't cause any input element in the header to start a drag
+        header.querySelectorAll("button, clipboard-copy, a, input, form, .js-file-header-dropdown, tool-tip").forEach(elem => {
+            events_to_stop_propagation_in_header.forEach(key => elem.addEventListener(key, (event) => event.stopPropagation()));
+        });
+        containersAndElements.push({
+            container,
+            element: container.children[1]
         });
     });
     const onDragStart = () => {
         // Close all open diffs
         const collapseButtons = document.querySelectorAll(".file.Details.Details--on > .file-header > .file-info > button");
         collapseButtons.forEach((elem) => elem.click());
-        diffIdToElement.forEach((element, id) => {
-            element.remove();
-            hiddenElements.add(id);
-        });
+        // delete the heavy content
+        containersAndElements.forEach(({ element }) => element.remove());
     };
-    return { onDragStart };
+    const onDragEnd = () => {
+        // add all the content back we deleted
+        containersAndElements.forEach(({ container, element }) => container.appendChild(element));
+    };
+    return { onDragStart, onDragEnd };
 }
 function setupNarratives() {
     let inputParent = document.querySelector(".pr-review-tools");
@@ -102,7 +100,7 @@ function setupNarratives() {
     let { buttonDiv, button } = makeButtonElement();
     inputParent.insertBefore(inputDiv, inputParent.children[1]);
     inputParent.insertBefore(buttonDiv, inputParent.children[1]);
-    const { onDragStart } = setupDiffContentRemover();
+    const { onDragStart, onDragEnd } = setupDiffContentRemover();
     // @ts-ignore: sortable is imported by chrome
     let sortable = Sortable.create(document.getElementsByClassName("js-diff-progressive-container")[0], {
         dataIdAttr: 'data-file-path',
@@ -111,9 +109,11 @@ function setupNarratives() {
             input.value = JSON.stringify(sortable.toArray());
         },
         onChoose: function () {
-            console.log("Hi ryan");
             onDragStart();
         },
+        onUnchoose: function () {
+            onDragEnd();
+        }
     });
     button.addEventListener("click", () => {
         input.select();
