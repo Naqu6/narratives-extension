@@ -189,6 +189,8 @@ function setupNarratives() {
     const { onDragStart, onDragEnd } = setupDiffContentRemover()
 
     function setInputValue(order) {
+        copyButton.removeAttribute("disabled")
+
         const  searchParams = new URLSearchParams(window.location.search);
         searchParams.append(SEARCH_PARAMS_KEY, encodeURIComponent(JSON.stringify(order)));
         input.value =  `${window.location.href.split('?')[0]}?${searchParams.toString()}`
@@ -202,7 +204,6 @@ function setupNarratives() {
             handle: ".narratives-dnd-handle",
             onUpdate() {
                 setInputValue(sortable.toArray())
-                copyButton.removeAttribute("disabled")
             },
             onChoose: function () {
                 onDragStart()
@@ -228,7 +229,6 @@ function setupNarratives() {
 
     if (narrativeFromQueryString !== null) {
         setOrder(narrativeFromQueryString)
-        input.value = narrativeFromQueryString
     }
 
 }
