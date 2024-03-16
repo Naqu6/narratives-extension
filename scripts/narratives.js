@@ -1,4 +1,8 @@
 const SEARCH_PARAMS_KEY = "diff-order";
+function closeAllOpenDiffs() {
+    const collapseButtons = document.querySelectorAll(".file.Details.Details--on > .file-header > .file-info > button");
+    collapseButtons.forEach((elem) => elem.click());
+}
 function makeButtonHTML(content) {
     return `<button target="_blank" aria-label="Copy Narratives Order" data-view-component="true" class="Button--secondary Button--small Button">
     <span class="Button-content">
@@ -18,6 +22,7 @@ function makeControlsDiv() {
     hideButton.style.display = "none";
     showButton.addEventListener("click", () => {
         document.querySelectorAll(".narratives-dnd-handle").forEach(handle => handle.style.display = "inline");
+        closeAllOpenDiffs();
         showButton.style.display = "none";
         hideButton.style.display = "inline-block";
     });
@@ -111,8 +116,7 @@ function setupDiffContentRemover() {
     });
     const onDragStart = () => {
         // Close all open diffs
-        const collapseButtons = document.querySelectorAll(".file.Details.Details--on > .file-header > .file-info > button");
-        collapseButtons.forEach((elem) => elem.click());
+        closeAllOpenDiffs();
         // delete the heavy content
         containersAndElements.forEach(({ element }) => element.remove());
     };
@@ -122,7 +126,14 @@ function setupDiffContentRemover() {
     };
     return { onDragStart, onDragEnd };
 }
-var narrativeFromQueryString = null;
+var presetOrder = null;
+function encodeOrder(order) {
+    return encodeURIComponent(JSON.stringify(order));
+}
+function storeOrder(order) {
+    // @ts-ignore
+    chrome.storage.local.set({ [document.location.pathname]: order });
+}
 function setupNarratives() {
     let inputParent = document.querySelector(".pr-review-tools");
     if (inputParent === null) {
@@ -144,9 +155,12 @@ function setupNarratives() {
     const { onDragStart, onDragEnd } = setupDiffContentRemover();
     function setInputValue(order) {
         copyButton.removeAttribute("disabled");
+        const encodedSearchParams = encodeOrder(order);
         const searchParams = new URLSearchParams(window.location.search);
-        searchParams.append(SEARCH_PARAMS_KEY, encodeURIComponent(JSON.stringify(order)));
+        searchParams.append(SEARCH_PARAMS_KEY, encodedSearchParams);
         input.value = `${window.location.href.split('?')[0]}?${searchParams.toString()}`;
+        // @ts-ignore
+        storeOrder(order);
     }
     // @ts-ignore: sortable is imported by chrome
     let sortable = Sortable.create(document.getElementsByClassName("js-diff-progressive-container")[0], {
@@ -167,13 +181,10 @@ function setupNarratives() {
         input.setSelectionRange(0, 1000000); // per w3 school
         navigator.clipboard.writeText(input.value);
     });
-    function setOrder(orderAsString) {
-        let result = JSON.parse(decodeURIComponent(orderAsString));
-        sortable.sort(result);
-        setInputValue(result);
-    }
-    if (narrativeFromQueryString !== null) {
-        setOrder(narrativeFromQueryString);
+    console.log("checking preset order", { presetOrder });
+    if (presetOrder !== null) {
+        sortable.sort(presetOrder);
+        setInputValue(presetOrder);
     }
 }
 const CHECK_TIME_MS = 50;
@@ -206,9 +217,20 @@ function extractNarrativeFromQueryString() {
     const searchParams = new URLSearchParams(document.location.search);
     const diffOrder = searchParams.get(SEARCH_PARAMS_KEY);
     if (diffOrder !== null) {
-        narrativeFromQueryString = diffOrder;
+        let orderFromURI = JSON.parse(decodeURIComponent(diffOrder));
+        if (presetOrder !== null) {
+            storeOrder(orderFromURI);
+        }
+        presetOrder = orderFromURI;
     }
 }
+// @ts-ignore
+chrome.storage.local.get(document.location.pathname, (data) => {
+    if (document.location.pathname in data) {
+        presetOrder = data[document.location.pathname];
+        console.log({ presetOrder });
+    }
+});
 // @ts-ignore: window.navigation exists on up to date versions of chrome
 window.navigation.addEventListener("navigate", function () {
     extractNarrativeFromQueryString();
