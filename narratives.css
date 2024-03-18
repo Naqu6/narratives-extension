@@ -1,0 +1,43 @@
+.narratives-spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #cccccc;
+    border-top-color: #296bd3;
+    animation: narratives-spin 1s linear infinite;
+    margin-right: 8px;
+    margin-top: 2px;
+  }
+  
+@keyframes narratives-spin {
+0% {
+    transform: rotate(0deg);
+}
+100% {
+    transform: rotate(360deg);
+}
+}
+
+#narratives-copied-indicator {
+    position: absolute;
+    width: 225px;
+    background-color: #fcfcfc;
+    margin-top: 8px;
+    margin-left: -50px;
+    text-align: center;
+    padding: 4px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    user-select: none;
+}
+
+#narratives-copied-indicator.narratives-copied-indicator-hidden {
+    visibility: hidden;
+    opacity: 0;
+
+    transition: opacity 1s ease-in-out, visibility 0s 1s;
+}
+#narratives-copied-indicator.narratives-copied-indicator-shown {
+    visibility: visible;
+    opacity: 1;
+}

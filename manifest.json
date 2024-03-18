@@ -5,6 +5,9 @@
     "version": "0.0.1",
     "content_scripts": [
       {
+          "css": [
+            "narratives.css"
+          ],
           "js": [
             "scripts/sortable.js",
             "scripts/narratives.js"

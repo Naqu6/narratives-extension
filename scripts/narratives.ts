@@ -1,5 +1,6 @@
 type FileOrdering = string[]
 const MAX_WAIT_MS_FOR_CHROME_STORAGE = 75
+const TOOLTIP_DISPLAY_TIME_MS = 2000
 
 
 /**
@@ -26,11 +27,22 @@ function makeButtonHTML(content: string, aria_label: string) {
 }
 
 function showLoadingIndicator() {
-    console.log("start loading")
+    let inputParent = document.querySelector(".pr-review-tools")
+    if (inputParent === null) { return }
+
+    const loadingDiv = document.createElement('div')
+    loadingDiv.className = "diffbar-item dropdown js-reviews-container";
+    loadingDiv.id = "narratives-loading-indicator"
+    loadingDiv.setAttribute("style", "margin-right: 16px; height: 28px; display: flex; flex-direction: column")
+
+    loadingDiv.innerHTML = `<div style="display: flex;margin: auto;"><div class="narratives-spinner"></div>Loading Diff Reordering</div>`
+    
+    inputParent.insertBefore(loadingDiv, inputParent.children[1])
+
 }
 
 function hideLoadingIndicator() {
-    console.log("stop loading")
+    document.querySelector("#narratives-loading-indicator")?.remove()
 }
 
 /**
@@ -83,6 +95,7 @@ function makeCopyButton() {
     copyButtonDiv.className = "diffbar-item dropdown js-reviews-container";
 
     const inputForClipboardHTML = `<input disabled type="text" id="narratives-input" style="display: none" aria-label="Narratives Order">`
+    const htmlForSuccessTooltip = `<div id="narratives-copied-indicator" class="narratives-copied-indicator-hidden">🚀 Link with order copied to clipboard</div>`
     const copyButtonHTML = makeButtonHTML(`
           <svg aria-hidden="true" focusable="false" role="img" class="octicon octicon-copy" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:inline-block;user-select:none;vertical-align:text-bottom;overflow:visible">
              <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path>
@@ -91,10 +104,13 @@ function makeCopyButton() {
           Copy Order
        `, "Copy Order");
 
-    copyButtonDiv.innerHTML = inputForClipboardHTML + copyButtonHTML
+    copyButtonDiv.innerHTML = inputForClipboardHTML + copyButtonHTML + htmlForSuccessTooltip
 
     let copyButton = copyButtonDiv.querySelector('button') as HTMLButtonElement;
     let input = copyButtonDiv.querySelector('input') as HTMLInputElement;
+    let successTooltip = copyButtonDiv.querySelector("#narratives-copied-indicator") as HTMLDivElement
+
+    let hideTimeoutId: null | number = null
 
     copyButton.setAttribute("disabled", "true")
     copyButtonDiv.style.marginRight = "8px"
@@ -102,6 +118,17 @@ function makeCopyButton() {
         input.select();
         input.setSelectionRange(0, 1000000); // per w3 school
         navigator.clipboard.writeText(input.value);
+
+        successTooltip.classList.remove("narratives-copied-indicator-hidden")
+        successTooltip.classList.add("narratives-copied-indicator-shown")
+        if (hideTimeoutId !== null) {
+            clearTimeout(hideTimeoutId)
+        }
+
+        hideTimeoutId = setTimeout(() => {
+            successTooltip.classList.add("narratives-copied-indicator-hidden")
+            successTooltip.classList.remove("narratives-copied-indicator-shown")
+        }, TOOLTIP_DISPLAY_TIME_MS)
     })
 
     const setCopyPasteValue = (content: string) => {
@@ -271,6 +298,9 @@ function setupNarratives(initialOrder: Promise<FileOrdering | null>) {
 
         let inputParent = document.querySelector(".pr-review-tools")
         if (inputParent === null) { return }
+
+        if (inputParent.getAttribute("narratives-setup") !== null) { return }
+        inputParent.setAttribute("narratives-setup", "true")
 
         combineContainers()
         setupHandles()
