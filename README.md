@@ -2,7 +2,9 @@
 
 Narratives is a chrome extension that modifies Github to allow drag-and-drop reordering of diffs in Github PRs.
 
-This way, when you're putting your code up for review, it's presented to reviewers in the order you intented, rather than in alphabetical order by file name.
+This way, when you're putting your code up for review, it's presented to reviewers in the order you intented, rather than in alphabetical order by file name. The extension runs fully in the browser: your code never leaves your computer. 
+
+[Download from the Chrome Web Store](https://chromewebstore.google.com/detail/narratives/ffcilgboekngchlbfoeefooaafhdnbkj)
 
 ## How it works
 
